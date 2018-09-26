@@ -1,0 +1,74 @@
+apply plugin: 'com.android.application'
+
+android {
+    //设置编译时用的Android版本
+    compileSdkVersion 25
+    //设置编译时使用的构建工具的版本，Android Studio3.0后去除此项配置
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "ligong.com.dememeeem"
+        minSdkVersion 21
+        targetSdkVersion 25//项目的目标版本
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"//表明要使用AndroidJUnitRunner进行单元测试
+    }
+    buildTypes {
+        release {
+            //混淆
+            minifyEnabled true
+            //移除无用的resource文件
+            shrinkResources true
+            //Zipalign优化
+            zipAlignEnabled true
+            //加载默认混淆配置文件
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets{
+        main{
+            assets.srcDirs = ['assets']    //资源文件
+            jni.srcDirs 'src/main/jni'   //jni文件
+            jniLibs.srcDirs = ['libs']    //jni库
+        }
+    }
+
+    packagingOptions{
+        //pickFirsts做用是 当有重复文件时 打包会报错 这样配置会使用第一个匹配的文件打包进入apk
+        // 表示当apk中有重复的META-INF目录下有重复的LICENSE文件时  只用第一个 这样打包就不会报错
+        pickFirsts = ['META-INF/LICENSE']
+        //merges何必 当出现重复文件时 合并重复的文件 然后打包入apk
+        //这个是有默认值得 merges = [] 这样会把默默认值去掉  所以我们用下面这种方式 在默认值后添加
+        merge 'META-INF/LICENSE'
+        //这个是在同时使用butterknife、dagger2做的一个处理。同理，遇到类似的问题，只要根据gradle的提示，做类似处理即可。
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+    }
+
+    //程序在编译的时候会检查lint，有任何错误提示会停止build，我们可以关闭这个开关
+    lintOptions {
+        abortOnError false
+        //即使报错也不会停止打包
+        checkReleaseBuilds false
+        //打包release版本的时候进行检测
+    }
+
+    //multiDex的一些相关配置，这样配置可以让你的编译速度更快
+    dexOptions {
+        preDexLibraries = false
+        //让它不要对Lib做preDexing
+//        incremental true  // 已弃用
+        //开启incremental dexing,优化编译效率，这个功能android studio默认是关闭的。
+        javaMaxHeapSize "4g"     //增加java堆内存大小
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+}
